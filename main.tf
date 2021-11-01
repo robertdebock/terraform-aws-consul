@@ -28,17 +28,6 @@ data "aws_iam_policy_document" "join_unseal" {
     ]
     resources = ["*"]
   }
-  # TODO: I don't think it's required to allow these actions.
-  statement {
-    actions = [
-      "kms:DescribeKey",
-      "kms:Encrypt",
-      "kms:Decrypt",
-    ]
-    resources = [
-      aws_kms_key.default.arn
-    ]
-  }
 }
 
 # Make a role to allow role assumption.
