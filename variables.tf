@@ -56,7 +56,7 @@ variable "size" {
 variable "amount" {
   description = "The amount of instances to deploy."
   type        = number
-  default     = 3
+  default     = 5
   validation {
     condition     = var.amount % 2 == 1 && var.amount >= 3 && var.amount <= 5
     error_message = "Please use an odd number for amount, like 3 or 5."
