@@ -316,8 +316,8 @@ resource "aws_lb" "default" {
 }
 
 # Create a load balancer target group.
-resource "aws_lb_target_group" "default" {
-  name     = var.name
+resource "aws_lb_target_group" "dns" {
+  name     = "${var.name}-dns-interface"
   port     = 8600
   protocol = "TCP_UDP"
   vpc_id   = local.vpc_id
@@ -326,16 +326,40 @@ resource "aws_lb_target_group" "default" {
     protocol = "TCP"
   }
 }
+# Create a load balancer target group.
+resource "aws_lb_target_group" "http" {
+  name     = "${var.name}-http-api"
+  port     = 8500
+  protocol = "TCP"
+  vpc_id   = local.vpc_id
+  tags     = var.tags
+  health_check {
+    protocol = "HTTP"
+    path = "/ui/"
+  }
+}
 
-# Add a listener to the loadbalancer.
-resource "aws_lb_listener" "default" {
+# Add a dns listener to the loadbalancer.
+resource "aws_lb_listener" "dns" {
   load_balancer_arn = aws_lb.default.arn
   port              = 8600
   protocol          = "TCP"
   tags              = var.tags
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.default.arn
+    target_group_arn = aws_lb_target_group.dns.arn
+  }
+}
+
+# Add a dns listener to the loadbalancer.
+resource "aws_lb_listener" "http" {
+  load_balancer_arn = aws_lb.default.arn
+  port              = 8500
+  protocol          = "TCP"
+  tags              = var.tags
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.http.arn
   }
 }
 
@@ -349,7 +373,7 @@ resource "aws_autoscaling_group" "default" {
   placement_group       = aws_placement_group.default.id
   max_instance_lifetime = var.max_instance_lifetime
   vpc_zone_identifier   = tolist(local.aws_subnet_ids)
-  target_group_arns     = tolist(aws_lb_target_group.default[*].arn)
+  target_group_arns     = [aws_lb_target_group.dns.arn, aws_lb_target_group.http.arn]
   launch_configuration  = aws_launch_configuration.default.name
   enabled_metrics       = ["GroupDesiredCapacity", "GroupInServiceCapacity", "GroupPendingCapacity", "GroupMinSize", "GroupMaxSize", "GroupInServiceInstances", "GroupPendingInstances", "GroupStandbyInstances", "GroupStandbyCapacity", "GroupTerminatingCapacity", "GroupTerminatingInstances", "GroupTotalCapacity", "GroupTotalInstances"]
   tag {
