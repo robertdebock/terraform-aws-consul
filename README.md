@@ -1,6 +1,6 @@
 # HashiCorp Consul on AWS
 
-This code spins up a opensource HashiCorp Consul cluster:
+This code spins up an opensource HashiCorp Consul cluster:
 
 - Spread over availability zones.
 - Automatically finding other nodes.
