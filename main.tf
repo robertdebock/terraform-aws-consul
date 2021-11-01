@@ -292,6 +292,11 @@ resource "aws_launch_configuration" "default" {
   user_data                   = local_file.default.content
   associate_public_ip_address = true
   spot_price                  = var.size == "development" ? "0.012" : null
+  root_block_device {
+    volume_type = local.volume_type
+    volume_size = local.volume_size
+    iops        = local.volume_iops
+  }
   depends_on                  = [local_file.default]
   lifecycle {
     create_before_destroy = true
