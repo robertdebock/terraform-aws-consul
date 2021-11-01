@@ -60,8 +60,6 @@ resource "random_string" default {
 resource "local_file" "default" {
   content = templatefile("${path.module}/user_data.sh.tpl",
     {
-      # kms_key_id        = aws_kms_key.default.id
-      # region            = var.region
       name              = var.name
       consul_version    = var.consul_version
       consul_datacenter = var.consul_datacenter
