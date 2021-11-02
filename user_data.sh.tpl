@@ -32,9 +32,9 @@ server = true
 
 bind_addr = "$${my_ipaddress}"
 
-encrypt = "${random_string}"
+encrypt = "${encrypt_string}"
 
-retry_join = ["provider=aws tag_key=name tag_value=${name}"]
+retry_join = ["provider=aws tag_key=name tag_value=${name}-${random_string}"]
 EOF
 
 # Start and enable consul.

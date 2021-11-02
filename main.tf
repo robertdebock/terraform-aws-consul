@@ -52,8 +52,16 @@ resource "aws_iam_instance_profile" "default" {
 }
 
 # Create a random string for encryption of the Consul network.
-resource "random_string" default {
+resource "random_string" encrypt {
   length = 32
+}
+
+# Create a random string to make tags more unique.
+resource "random_string" "default" {
+  length  = 6
+  special = false
+  upper   = false
+  number  = false
 }
 
 # Write user_data.sh.
@@ -64,7 +72,8 @@ resource "local_file" "default" {
       consul_version    = var.consul_version
       consul_datacenter = var.consul_datacenter
       amount            = var.amount
-      random_string     = base64encode(random_string.default.result)
+      encrypt_string    = base64encode(random_string.encrypt.result)
+      random_string     = random_string.default.result
     }
   )
   filename             = "${path.module}/user_data.sh"
@@ -380,7 +389,7 @@ resource "aws_autoscaling_group" "default" {
   enabled_metrics       = ["GroupDesiredCapacity", "GroupInServiceCapacity", "GroupPendingCapacity", "GroupMinSize", "GroupMaxSize", "GroupInServiceInstances", "GroupPendingInstances", "GroupStandbyInstances", "GroupStandbyCapacity", "GroupTerminatingCapacity", "GroupTerminatingInstances", "GroupTotalCapacity", "GroupTotalInstances"]
   tag {
     key                 = "name"
-    value               = var.name
+    value               = "${var.name}-${random_string.default.result}"
     propagate_at_launch = true
   }
   timeouts {
