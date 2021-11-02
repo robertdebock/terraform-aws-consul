@@ -32,8 +32,6 @@ server = true
 
 bind_addr = "$${my_ipaddress}"
 
-bootstrap_expect=${amount}
-
 encrypt = "${random_string}"
 
 retry_join = ["provider=aws tag_key=name tag_value=${name}"]
