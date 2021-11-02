@@ -19,6 +19,7 @@ locals {
   }
   volume_type = local._volume_type[var.size]
 
+  # A map from `size` to `volume_size`.
   _volume_size = {
     development = "8"
     minimum     = "50"
@@ -28,6 +29,7 @@ locals {
   }
   volume_size = local._volume_size[var.size]
 
+  # A map from `size` to `volume_iops`.
   _volume_iops = {
     development = "100"
     minimum     = "2500"
