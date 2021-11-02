@@ -328,22 +328,22 @@ resource "aws_lb" "default" {
 
 # Create a load balancer target group.
 resource "aws_lb_target_group" "dns" {
-  name     = "${var.name}-dns-interface"
-  port     = 8600
-  protocol = "TCP_UDP"
-  vpc_id   = local.vpc_id
-  tags     = var.tags
+  name_prefix = "${var.name}-dns-interface-"
+  port        = 8600
+  protocol    = "TCP_UDP"
+  vpc_id      = local.vpc_id
+  tags        = var.tags
   health_check {
     protocol = "TCP"
   }
 }
 # Create a load balancer target group.
 resource "aws_lb_target_group" "http" {
-  name     = "${var.name}-http-api"
-  port     = 8500
-  protocol = "TCP"
-  vpc_id   = local.vpc_id
-  tags     = var.tags
+  name_prefix = "${var.name}-http-app-"
+  port        = 8500
+  protocol    = "TCP"
+  vpc_id      = local.vpc_id
+  tags        = var.tags
   health_check {
     protocol = "HTTP"
     path = "/ui/"
