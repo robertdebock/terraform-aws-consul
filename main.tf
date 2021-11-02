@@ -328,7 +328,7 @@ resource "aws_lb" "default" {
 
 # Create a load balancer target group.
 resource "aws_lb_target_group" "dns" {
-  name_prefix = "${var.name}-dns-interface-"
+  name_prefix = "dns-"
   port        = 8600
   protocol    = "TCP_UDP"
   vpc_id      = local.vpc_id
@@ -339,7 +339,7 @@ resource "aws_lb_target_group" "dns" {
 }
 # Create a load balancer target group.
 resource "aws_lb_target_group" "http" {
-  name_prefix = "${var.name}-http-app-"
+  name_prefix = "http-"
   port        = 8500
   protocol    = "TCP"
   vpc_id      = local.vpc_id
