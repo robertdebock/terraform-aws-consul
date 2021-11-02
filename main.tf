@@ -283,7 +283,7 @@ resource "aws_security_group_rule" "internet" {
 
 # Create a launch template.
 resource "aws_launch_configuration" "default" {
-  name                        = "${var.name}-${var.launch_configuration_version}"
+  name_prefix                 = "${var.name}-"
   image_id                    = data.aws_ami.default.id
   instance_type               = local.instance_type
   key_name                    = aws_key_pair.default.id
