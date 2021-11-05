@@ -52,7 +52,7 @@ resource "aws_iam_instance_profile" "default" {
 }
 
 # Create a random string for encryption of the Consul network.
-resource "random_string" encrypt {
+resource "random_string" "encrypt" {
   length = 32
 }
 
@@ -83,7 +83,6 @@ resource "local_file" "default" {
 
 # Create a VPC.
 resource "aws_vpc" "default" {
-  # Make a VPC when var.vpc_id is not set.
   count      = var.vpc_id == "" ? 1 : 0
   cidr_block = local.cidr_block
   tags       = var.tags
@@ -91,21 +90,18 @@ resource "aws_vpc" "default" {
 
 # Lookup a VPC.
 data "aws_vpc" "default" {
-  # Lookup a VPC when var.vpc_id is set.
   count = var.vpc_id == "" ? 0 : 1
   id    = var.vpc_id
 }
 
 # Create an internet gateway.
 resource "aws_internet_gateway" "default" {
-  # Create an internet gateway when a VPC has been created.
   count  = var.vpc_id == "" ? 1 : 0
   vpc_id = local.vpc_id
   tags   = var.tags
 }
 
 data "aws_internet_gateway" "default" {
-  # Lookup an internet gateway when a VPC has been provided.
   count = var.vpc_id == "" ? 0 : 1
   filter {
     name   = "attachment.vpc-id"
@@ -115,20 +111,17 @@ data "aws_internet_gateway" "default" {
 
 # Create a routing table for the internet gateway.
 resource "aws_route_table" "default" {
-  # Make the routing table when a VPC has been created.
   count  = var.vpc_id == "" ? 1 : 0
   vpc_id = local.vpc_id
 }
 
 data "aws_route_tables" "default" {
-  # Lookup the routing table when a VPC has been provided.
   count  = var.vpc_id == "" ? 0 : 1
   vpc_id = local.vpc_id
 }
 
 # Add an internet route to the internet gateway.
 resource "aws_route" "default" {
-  # Only add a route when a VPC has been created.
   count                  = var.vpc_id == "" ? 1 : 0
   route_table_id         = local.aws_route_table_id
   destination_cidr_block = "0.0.0.0/0"
@@ -137,7 +130,6 @@ resource "aws_route" "default" {
 
 # Create the same amount of subnets as the amount of instances when we create the vpc.
 resource "aws_subnet" "default" {
-  # Only make an aws_subnet when the vpc has been generated.
   count             = var.vpc_id == "" ? min(length(data.aws_availability_zones.default.names), var.amount) : 0
   vpc_id            = local.vpc_id
   cidr_block        = "${var.aws_vpc_cidr_block_start}.${count.index}.0/24"
@@ -188,95 +180,95 @@ resource "aws_security_group" "default" {
 
 # Allow Consul ports to be accessed.
 resource "aws_security_group_rule" "server_rpc" {
-  description       = "Server RPC"
-  type              = "ingress"
-  from_port         = 8300
-  to_port           = 8300
-  protocol          = "TCP"
-  cidr_blocks       = [local.cidr_block]
-  security_group_id = aws_security_group.default.id
+  description              = "Server RPC"
+  type                     = "ingress"
+  from_port                = 8300
+  to_port                  = 8300
+  protocol                 = "TCP"
+  source_security_group_id = aws_security_group.default.id
+  security_group_id        = aws_security_group.default.id
 }
 
 resource "aws_security_group_rule" "serf_lan_tcp" {
-  description       = "Serf LAN (tcp)"
-  type              = "ingress"
-  from_port         = 8301
-  to_port           = 8301
-  protocol          = "TCP"
-  cidr_blocks       = [local.cidr_block]
-  security_group_id = aws_security_group.default.id
+  description              = "Serf LAN (tcp)"
+  type                     = "ingress"
+  from_port                = 8301
+  to_port                  = 8301
+  protocol                 = "TCP"
+  source_security_group_id = aws_security_group.default.id
+  security_group_id        = aws_security_group.default.id
 }
 
 resource "aws_security_group_rule" "serf_lan_udp" {
-  description       = "Serf LAN (udp)"
-  type              = "ingress"
-  from_port         = 8301
-  to_port           = 8301
-  protocol          = "UDP"
-  cidr_blocks       = [local.cidr_block]
-  security_group_id = aws_security_group.default.id
+  description              = "Serf LAN (udp)"
+  type                     = "ingress"
+  from_port                = 8301
+  to_port                  = 8301
+  protocol                 = "UDP"
+  source_security_group_id = aws_security_group.default.id
+  security_group_id        = aws_security_group.default.id
 }
 
 resource "aws_security_group_rule" "serf_wan_tcp" {
-  description       = "Serf WAN (tcp)"
-  type              = "ingress"
-  from_port         = 8302
-  to_port           = 8302
-  protocol          = "TCP"
-  cidr_blocks       = [local.cidr_block]
-  security_group_id = aws_security_group.default.id
+  description              = "Serf WAN (tcp)"
+  type                     = "ingress"
+  from_port                = 8302
+  to_port                  = 8302
+  protocol                 = "TCP"
+  source_security_group_id = aws_security_group.default.id
+  security_group_id        = aws_security_group.default.id
 }
 
 resource "aws_security_group_rule" "serf_wan_udp" {
-  description       = "Serf WAN (udp)"
-  type              = "ingress"
-  from_port         = 8302
-  to_port           = 8302
-  protocol          = "UDP"
-  cidr_blocks       = [local.cidr_block]
-  security_group_id = aws_security_group.default.id
+  description              = "Serf WAN (udp)"
+  type                     = "ingress"
+  from_port                = 8302
+  to_port                  = 8302
+  protocol                 = "UDP"
+  source_security_group_id = aws_security_group.default.id
+  security_group_id        = aws_security_group.default.id
 }
 
 
 resource "aws_security_group_rule" "http_api" {
-  description       = "HTTP API"
-  type              = "ingress"
-  from_port         = 8500
-  to_port           = 8500
-  protocol          = "TCP"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.default.id
+  description              = "HTTP API"
+  type                     = "ingress"
+  from_port                = 8500
+  to_port                  = 8500
+  protocol                 = "TCP"
+  source_security_group_id = aws_security_group.default.id
+  security_group_id        = aws_security_group.default.id
 }
 
 resource "aws_security_group_rule" "dns_interface_tcp" {
-  description       = "DNS Interface (tcp)"
-  type              = "ingress"
-  from_port         = 8600
-  to_port           = 8600
-  protocol          = "TCP"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.default.id
+  description              = "DNS Interface (tcp)"
+  type                     = "ingress"
+  from_port                = 8600
+  to_port                  = 8600
+  protocol                 = "TCP"
+  source_security_group_id = aws_security_group.default.id
+  security_group_id        = aws_security_group.default.id
 }
 
 resource "aws_security_group_rule" "dns_interface_udp" {
-  description       = "DNS Interface (udp)"
-  type              = "ingress"
-  from_port         = 8600
-  to_port           = 8600
-  protocol          = "UDP"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.default.id
+  description              = "DNS Interface (udp)"
+  type                     = "ingress"
+  from_port                = 8600
+  to_port                  = 8600
+  protocol                 = "UDP"
+  source_security_group_id = aws_security_group.default.id
+  security_group_id        = aws_security_group.default.id
 }
 
 # Allow access from the bastion host.
 resource "aws_security_group_rule" "ssh" {
-  description       = "ssh"
-  type              = "ingress"
-  from_port         = 22
-  to_port           = 22
-  protocol          = "TCP"
-  cidr_blocks       = [local.cidr_block]
-  security_group_id = aws_security_group.default.id
+  description              = "ssh"
+  type                     = "ingress"
+  from_port                = 22
+  to_port                  = 22
+  protocol                 = "TCP"
+  source_security_group_id = aws_security_group.default.id
+  security_group_id        = aws_security_group.default.id
 }
 
 # Allow internet from the instances. Required for package installations.
@@ -288,6 +280,46 @@ resource "aws_security_group_rule" "internet" {
   type              = "egress"
   cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = aws_security_group.default.id
+}
+
+# Create a security group for the loadbalancer.
+resource "aws_security_group" "loadbalancer" {
+  name   = "${var.name}-loadbalancer"
+  vpc_id = local.vpc_id
+  tags   = var.tags
+}
+
+# Allow the consul API to be accessed from the internet.
+resource "aws_security_group_rule" "loadbalancer_http_api" {
+  description       = "loadbalancer vault api"
+  type              = "ingress"
+  from_port         = 8500
+  to_port           = 8500
+  protocol          = "TCP"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.loadbalancer.id
+}
+
+# Allow the consukl DNS interface to be accessed from the internet. (tcp)
+resource "aws_security_group_rule" "loabalancer_dns_interface_tcp" {
+  description       = "loadbalancer consul dns (tcp)"
+  type              = "ingress"
+  from_port         = 8600
+  to_port           = 8600
+  protocol          = "TCP"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.loadbalancer.id
+}
+
+# Allow the consukl DNS interface to be accessed from the internet. (udp)
+resource "aws_security_group_rule" "loabalancer_dns_interface_udp" {
+  description       = "loadbalancer consul dns (udp)"
+  type              = "ingress"
+  from_port         = 8600
+  to_port           = 8600
+  protocol          = "UDP"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.loadbalancer.id
 }
 
 # Create a launch template.
@@ -321,7 +353,8 @@ resource "aws_placement_group" "default" {
 # Add a load balancer.
 resource "aws_lb" "default" {
   name               = var.name
-  load_balancer_type = "network"
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.loadbalancer.id, aws_security_group.default.id]
   subnets            = local.aws_subnet_ids
   tags               = var.tags
 }
@@ -346,7 +379,7 @@ resource "aws_lb_target_group" "http" {
   tags        = var.tags
   health_check {
     protocol = "HTTP"
-    path = "/ui/"
+    path     = "/ui/"
   }
 }
 
