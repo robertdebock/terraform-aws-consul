@@ -41,6 +41,7 @@ These variables can be used.
 - `tags` - default `{owner = "unset"}`.
 - `max_instance_lifetime` - default `86400`. (1 day)
 - `vpc_id` - default `""`.
+- `service_cidr_blocks` - default `[0.0.0.0/0]`.
 
 ## Deployment
 

@@ -98,3 +98,13 @@ variable "max_instance_lifetime" {
     error_message = "Use \"0\" to remove the parameter or a value between \"86400\" and \"31536000\"."
   }
 }
+
+variable "service_cidr_blocks" {
+  description = "A list of CIDR blocks to allow access to Consul."
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+  validation {
+    condition     = length(var.service_cidr_blocks) >= 1
+    error_message = "Please specify a list of CIDRs. For example: [\"172.0.0.0/8\", \"10.0.0.0/8\"]."
+  }
+}

@@ -231,33 +231,33 @@ resource "aws_security_group_rule" "serf_wan_udp" {
 
 
 resource "aws_security_group_rule" "http_api" {
-  description              = "HTTP API"
-  type                     = "ingress"
-  from_port                = 8500
-  to_port                  = 8500
-  protocol                 = "TCP"
-  source_security_group_id = aws_security_group.default.id
-  security_group_id        = aws_security_group.default.id
+  description       = "HTTP API"
+  type              = "ingress"
+  from_port         = 8500
+  to_port           = 8500
+  protocol          = "TCP"
+  cidr_blocks       = concat([local.cidr_block], var.service_cidr_blocks)
+  security_group_id = aws_security_group.default.id
 }
 
 resource "aws_security_group_rule" "dns_interface_tcp" {
-  description              = "DNS Interface (tcp)"
-  type                     = "ingress"
-  from_port                = 8600
-  to_port                  = 8600
-  protocol                 = "TCP"
-  source_security_group_id = aws_security_group.default.id
-  security_group_id        = aws_security_group.default.id
+  description       = "DNS Interface (tcp)"
+  type              = "ingress"
+  from_port         = 8600
+  to_port           = 8600
+  protocol          = "TCP"
+  cidr_blocks       = concat([local.cidr_block], var.service_cidr_blocks)
+  security_group_id = aws_security_group.default.id
 }
 
 resource "aws_security_group_rule" "dns_interface_udp" {
-  description              = "DNS Interface (udp)"
-  type                     = "ingress"
-  from_port                = 8600
-  to_port                  = 8600
-  protocol                 = "UDP"
-  source_security_group_id = aws_security_group.default.id
-  security_group_id        = aws_security_group.default.id
+  description       = "DNS Interface (udp)"
+  type              = "ingress"
+  from_port         = 8600
+  to_port           = 8600
+  protocol          = "UDP"
+  cidr_blocks       = concat([local.cidr_block], var.service_cidr_blocks)
+  security_group_id = aws_security_group.default.id
 }
 
 # Allow access from the bastion host.
@@ -280,46 +280,6 @@ resource "aws_security_group_rule" "internet" {
   type              = "egress"
   cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = aws_security_group.default.id
-}
-
-# Create a security group for the loadbalancer.
-resource "aws_security_group" "loadbalancer" {
-  name   = "${var.name}-loadbalancer"
-  vpc_id = local.vpc_id
-  tags   = var.tags
-}
-
-# Allow the consul API to be accessed from the internet.
-resource "aws_security_group_rule" "loadbalancer_http_api" {
-  description       = "loadbalancer vault api"
-  type              = "ingress"
-  from_port         = 8500
-  to_port           = 8500
-  protocol          = "TCP"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.loadbalancer.id
-}
-
-# Allow the consukl DNS interface to be accessed from the internet. (tcp)
-resource "aws_security_group_rule" "loabalancer_dns_interface_tcp" {
-  description       = "loadbalancer consul dns (tcp)"
-  type              = "ingress"
-  from_port         = 8600
-  to_port           = 8600
-  protocol          = "TCP"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.loadbalancer.id
-}
-
-# Allow the consukl DNS interface to be accessed from the internet. (udp)
-resource "aws_security_group_rule" "loabalancer_dns_interface_udp" {
-  description       = "loadbalancer consul dns (udp)"
-  type              = "ingress"
-  from_port         = 8600
-  to_port           = 8600
-  protocol          = "UDP"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.loadbalancer.id
 }
 
 # Create a launch template.
@@ -356,8 +316,8 @@ resource "aws_lb" "default" {
   name               = var.name
   load_balancer_type = "network"
   # security_groups    = [aws_security_group.loadbalancer.id, aws_security_group.default.id]
-  subnets            = local.aws_subnet_ids
-  tags               = var.tags
+  subnets = local.aws_subnet_ids
+  tags    = var.tags
 }
 
 # Create a load balancer target group.
@@ -479,7 +439,7 @@ resource "aws_instance" "bastion" {
   tags                        = var.tags
 }
 
-# Collect the created vault instances.
+# Collect the created consul instances.
 data "aws_instances" "default" {
   instance_state_names = ["running"]
   instance_tags = {
