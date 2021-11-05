@@ -334,6 +334,7 @@ resource "aws_launch_configuration" "default" {
   associate_public_ip_address = true
   spot_price                  = var.size == "development" ? "0.012" : null
   root_block_device {
+    encrypted   = false
     volume_type = local.volume_type
     volume_size = local.volume_size
     iops        = local.volume_iops
@@ -353,8 +354,8 @@ resource "aws_placement_group" "default" {
 # Add a load balancer.
 resource "aws_lb" "default" {
   name               = var.name
-  load_balancer_type = "application"
-  security_groups    = [aws_security_group.loadbalancer.id, aws_security_group.default.id]
+  load_balancer_type = "network"
+  # security_groups    = [aws_security_group.loadbalancer.id, aws_security_group.default.id]
   subnets            = local.aws_subnet_ids
   tags               = var.tags
 }
