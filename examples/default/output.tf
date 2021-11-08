@@ -8,7 +8,12 @@ output "bastion_host_ip" {
   value       = module.consul.bastion_host_public_ip
 }
 
-output "consul_instances" {
-  description = "The private addresses of the Consul hosts. You can reach these throught the bastion host."
-  value       = module.consul.consul_instances
+output "consul_server_instances" {
+  description = "The private addresses of the Consul server hosts. You can reach these throught the bastion host."
+  value       = module.consul.consul_server_instances
+}
+
+output "consul_agent_instances" {
+  description = "The private addresses of the Consul agent hosts. You can reach these throught the bastion host."
+  value       = module.consul.consul_agent_instances
 }

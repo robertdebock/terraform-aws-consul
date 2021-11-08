@@ -65,8 +65,8 @@ resource "random_string" "default" {
 }
 
 # Write user_data.sh.
-resource "local_file" "default" {
-  content = templatefile("${path.module}/user_data.sh.tpl",
+resource "local_file" "server" {
+  content = templatefile("${path.module}/user_data_server.sh.tpl",
     {
       name              = var.name
       consul_version    = var.consul_version
@@ -76,7 +76,23 @@ resource "local_file" "default" {
       random_string     = random_string.default.result
     }
   )
-  filename             = "${path.module}/user_data.sh"
+  filename             = "${path.module}/user_data_server.sh"
+  file_permission      = "0640"
+  directory_permission = "0755"
+}
+
+resource "local_file" "agent" {
+  content = templatefile("${path.module}/user_data_agent.sh.tpl",
+    {
+      name              = var.name
+      consul_version    = var.consul_version
+      consul_datacenter = var.consul_datacenter
+      amount            = var.amount
+      encrypt_string    = base64encode(random_string.encrypt.result)
+      random_string     = random_string.default.result
+    }
+  )
+  filename             = "${path.module}/user_data_agent.sh"
   file_permission      = "0640"
   directory_permission = "0755"
 }
@@ -282,17 +298,40 @@ resource "aws_security_group_rule" "internet" {
   security_group_id = aws_security_group.default.id
 }
 
-# Create a launch template.
-resource "aws_launch_configuration" "default" {
-  name_prefix                 = "${var.name}-"
+# Create a launch template for the consul servers.
+resource "aws_launch_configuration" "server" {
+  name_prefix                 = "${var.name}-server-"
   image_id                    = data.aws_ami.default.id
   instance_type               = local.instance_type
   key_name                    = aws_key_pair.default.id
   security_groups             = [aws_security_group.default.id]
   iam_instance_profile        = aws_iam_instance_profile.default.name
-  user_data                   = local_file.default.content
+  user_data                   = local_file.server.content
   associate_public_ip_address = true
   spot_price                  = var.size == "development" ? "0.012" : null
+  root_block_device {
+    encrypted   = false
+    volume_type = local.volume_type
+    volume_size = local.volume_size
+    iops        = local.volume_iops
+  }
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# Create a launch template for the consul agents.
+resource "aws_launch_configuration" "agent" {
+  count                       = var.size == "development" ? 1 : 0
+  name_prefix                 = "${var.name}-agent-"
+  image_id                    = data.aws_ami.default.id
+  instance_type               = local.instance_type
+  key_name                    = aws_key_pair.default.id
+  security_groups             = [aws_security_group.default.id]
+  iam_instance_profile        = aws_iam_instance_profile.default.name
+  user_data                   = local_file.agent.content
+  associate_public_ip_address = true
+  spot_price                  = "0.012"
   root_block_device {
     encrypted   = false
     volume_type = local.volume_type
@@ -368,9 +407,9 @@ resource "aws_lb_listener" "http" {
   }
 }
 
-# Create an auto scaling group.
-resource "aws_autoscaling_group" "default" {
-  name                  = var.name
+# Create an auto scaling group for the servers.
+resource "aws_autoscaling_group" "servers" {
+  name                  = "${var.name}-servers"
   desired_capacity      = var.amount
   min_size              = var.amount - 1
   max_size              = var.amount + 1
@@ -379,7 +418,7 @@ resource "aws_autoscaling_group" "default" {
   max_instance_lifetime = var.max_instance_lifetime
   vpc_zone_identifier   = tolist(local.aws_subnet_ids)
   target_group_arns     = [aws_lb_target_group.dns.arn, aws_lb_target_group.http.arn]
-  launch_configuration  = aws_launch_configuration.default.name
+  launch_configuration  = aws_launch_configuration.server.name
   enabled_metrics       = ["GroupDesiredCapacity", "GroupInServiceCapacity", "GroupPendingCapacity", "GroupMinSize", "GroupMaxSize", "GroupInServiceInstances", "GroupPendingInstances", "GroupStandbyInstances", "GroupStandbyCapacity", "GroupTerminatingCapacity", "GroupTerminatingInstances", "GroupTotalCapacity", "GroupTotalInstances"]
   instance_refresh {
     strategy = "Rolling"
@@ -391,6 +430,50 @@ resource "aws_autoscaling_group" "default" {
   tag {
     key                 = "name"
     value               = "${var.name}-${random_string.default.result}"
+    propagate_at_launch = true
+  }
+  tag {
+    key                 = "role"
+    value               = "server"
+    propagate_at_launch = true
+  }
+  timeouts {
+    delete = "15m"
+  }
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# Create an auto scaling group for the agents.
+resource "aws_autoscaling_group" "agents" {
+  count                 = var.size == "development" ? 1 : 0
+  name                  = "${var.name}-agents"
+  desired_capacity      = 2
+  min_size              = 2 - 1
+  max_size              = 2 + 1
+  health_check_type     = "EC2"
+  placement_group       = aws_placement_group.default.id
+  max_instance_lifetime = var.max_instance_lifetime
+  vpc_zone_identifier   = tolist(local.aws_subnet_ids)
+  # target_group_arns     = [aws_lb_target_group.dns.arn, aws_lb_target_group.http.arn]
+  launch_configuration  = aws_launch_configuration.agent[0].name
+  enabled_metrics       = ["GroupDesiredCapacity", "GroupInServiceCapacity", "GroupPendingCapacity", "GroupMinSize", "GroupMaxSize", "GroupInServiceInstances", "GroupPendingInstances", "GroupStandbyInstances", "GroupStandbyCapacity", "GroupTerminatingCapacity", "GroupTerminatingInstances", "GroupTotalCapacity", "GroupTotalInstances"]
+  instance_refresh {
+    strategy = "Rolling"
+    preferences {
+      min_healthy_percentage = 90
+      instance_warmup        = 300
+    }
+  }
+  tag {
+    key                 = "name"
+    value               = "${var.name}-${random_string.default.result}"
+    propagate_at_launch = true
+  }
+  tag {
+    key                 = "role"
+    value               = "agent"
     propagate_at_launch = true
   }
   timeouts {
@@ -446,11 +529,23 @@ resource "aws_instance" "bastion" {
   tags                        = var.tags
 }
 
-# Collect the created consul instances.
-data "aws_instances" "default" {
+# Collect the created consul servers.
+data "aws_instances" "servers" {
   instance_state_names = ["running"]
   instance_tags = {
     name = "${var.name}-${random_string.default.result}"
+    role = "server"
   }
-  depends_on = [aws_autoscaling_group.default]
+  depends_on = [aws_autoscaling_group.servers]
+}
+
+# Collect the created consul agents.
+data "aws_instances" "agents" {
+  count                = var.size == "development" ? 1 : 0
+  instance_state_names = ["running"]
+  instance_tags = {
+    name = "${var.name}-${random_string.default.result}"
+    role = "agent"
+  }
+  depends_on = [aws_autoscaling_group.agents]
 }
