@@ -368,6 +368,7 @@ resource "aws_lb_target_group" "dns" {
   tags        = var.tags
   health_check {
     protocol = "TCP"
+    interval = 10
   }
 }
 # Create a load balancer target group.
@@ -376,15 +377,17 @@ resource "aws_lb_target_group" "http" {
   port        = 8500
   protocol    = "TCP"
   vpc_id      = local.vpc_id
+  preserve_client_ip = true
   tags        = var.tags
   health_check {
     protocol = "HTTP"
     path     = "/ui/"
+    interval = 10
   }
 }
 
 # Add a dns listener to the loadbalancer.
-resource "aws_lb_listener" "dnstcp" {
+resource "aws_lb_listener" "dns" {
   load_balancer_arn = aws_lb.default.arn
   port              = 8600
   protocol          = "TCP_UDP"
