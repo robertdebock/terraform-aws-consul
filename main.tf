@@ -384,10 +384,10 @@ resource "aws_lb_target_group" "http" {
 }
 
 # Add a dns listener to the loadbalancer.
-resource "aws_lb_listener" "dns" {
+resource "aws_lb_listener" "dnstcp" {
   load_balancer_arn = aws_lb.default.arn
   port              = 8600
-  protocol          = "TCP"
+  protocol          = "TCP_UDP"
   tags              = var.tags
   default_action {
     type             = "forward"
