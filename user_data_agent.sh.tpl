@@ -40,3 +40,29 @@ systemctl --now enable consul
 
 # Allow users to use `consul`.
 echo "export CONSUL_HTTP_ADDR=http://$${my_ipaddress}:8500" >> /etc/profile
+
+# Run a webserver.
+yum -y install httpd
+systemctl --now enable httpd
+
+echo "Hello $${my_hostname}" > /var/www/html/index.html
+
+# Register the service with Consul.
+cat << EOF > /etc/consul.d/httpd.json
+  {
+    "service": {
+      "name": "httpd",
+      "port": 80,
+      "check": {
+        "id": "httpd",
+        "name": "Check httpd",
+        "http": "http://localhost/",
+        "method": "GET",
+        "interval": "10s",
+        "timeout": "1s"
+      }
+    }
+  }
+EOF
+
+systemctl restart consul
