@@ -59,10 +59,7 @@ You can't change this value after a deployment is done, without loosing service.
 
 This determines the version of Consul to install. Pick a version from [this](https://releases.hashicorp.com/consul/) list.
 
-Changing this value after the cluster has been deployed has effect after:
-
-- The `max_instance_lifetime` has passed and a instance is replaced.
-- Manually triggering an instance refresh in the AWS console.
+Version 1.9.0 (and up) has a compatible configuration format.
 
 ### size
 
