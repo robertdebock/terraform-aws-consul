@@ -262,13 +262,13 @@ resource "aws_security_group_rule" "dns_interface_udp" {
 
 # Allow access from the bastion host.
 resource "aws_security_group_rule" "ssh" {
-  description              = "ssh"
-  type                     = "ingress"
-  from_port                = 22
-  to_port                  = 22
-  protocol                 = "TCP"
-  source_security_group_id = aws_security_group.default.id
-  security_group_id        = aws_security_group.default.id
+  description       = "ssh"
+  type              = "ingress"
+  from_port         = 22
+  to_port           = 22
+  protocol          = "TCP"
+  cidr_blocks       = [local.cidr_block]
+  security_group_id = aws_security_group.default.id
 }
 
 # Allow internet from the instances. Required for package installations.
