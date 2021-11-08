@@ -368,7 +368,6 @@ resource "aws_lb_target_group" "dns" {
   tags        = var.tags
   health_check {
     protocol = "TCP"
-    interval = 10
   }
 }
 # Create a load balancer target group.
