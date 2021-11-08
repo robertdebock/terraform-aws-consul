@@ -41,3 +41,6 @@ EOF
 
 # Start and enable consul.
 systemctl --now enable consul
+
+# Allow users to use `consul`.
+echo "export CONSUL_HTTP_ADDR=http://$${my_ipaddress}:8500" >> /etc/profile
