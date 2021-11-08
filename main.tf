@@ -194,7 +194,7 @@ resource "aws_security_group" "default" {
   tags   = var.tags
 }
 
-# Allow Consul ports to be accessed.
+# Allow RPC ports to be accessed.
 resource "aws_security_group_rule" "server_rpc" {
   description              = "Server RPC"
   type                     = "ingress"
@@ -205,6 +205,7 @@ resource "aws_security_group_rule" "server_rpc" {
   security_group_id        = aws_security_group.default.id
 }
 
+# Allow Serf LAN (TCP) ports to be accessed.
 resource "aws_security_group_rule" "serf_lan_tcp" {
   description              = "Serf LAN (tcp)"
   type                     = "ingress"
@@ -215,6 +216,7 @@ resource "aws_security_group_rule" "serf_lan_tcp" {
   security_group_id        = aws_security_group.default.id
 }
 
+# Allow Serf LAN (UDP) ports to be accessed.
 resource "aws_security_group_rule" "serf_lan_udp" {
   description              = "Serf LAN (udp)"
   type                     = "ingress"
@@ -225,6 +227,7 @@ resource "aws_security_group_rule" "serf_lan_udp" {
   security_group_id        = aws_security_group.default.id
 }
 
+# Allow Serf WAN (TCP) ports to be accessed.
 resource "aws_security_group_rule" "serf_wan_tcp" {
   description              = "Serf WAN (tcp)"
   type                     = "ingress"
@@ -235,6 +238,7 @@ resource "aws_security_group_rule" "serf_wan_tcp" {
   security_group_id        = aws_security_group.default.id
 }
 
+# Allow Serf WAN (UDP) ports to be accessed.
 resource "aws_security_group_rule" "serf_wan_udp" {
   description              = "Serf WAN (udp)"
   type                     = "ingress"
@@ -245,7 +249,7 @@ resource "aws_security_group_rule" "serf_wan_udp" {
   security_group_id        = aws_security_group.default.id
 }
 
-
+# Allow HTTP API ports to be accessed.
 resource "aws_security_group_rule" "http_api" {
   description       = "HTTP API"
   type              = "ingress"
@@ -256,6 +260,7 @@ resource "aws_security_group_rule" "http_api" {
   security_group_id = aws_security_group.default.id
 }
 
+# Allow DNS Interface (TCP) ports to be accessed.
 resource "aws_security_group_rule" "dns_interface_tcp" {
   description       = "DNS Interface (tcp)"
   type              = "ingress"
@@ -266,6 +271,7 @@ resource "aws_security_group_rule" "dns_interface_tcp" {
   security_group_id = aws_security_group.default.id
 }
 
+# Allow DNS Interface (UDP) ports to be accessed.
 resource "aws_security_group_rule" "dns_interface_udp" {
   description       = "DNS Interface (udp)"
   type              = "ingress"
@@ -276,7 +282,7 @@ resource "aws_security_group_rule" "dns_interface_udp" {
   security_group_id = aws_security_group.default.id
 }
 
-# Allow access from the bastion host.
+# Allow SSH access from the bastion host.
 resource "aws_security_group_rule" "ssh" {
   description       = "ssh"
   type              = "ingress"
@@ -354,7 +360,6 @@ resource "aws_placement_group" "default" {
 resource "aws_lb" "default" {
   name               = var.name
   load_balancer_type = "network"
-  # security_groups    = [aws_security_group.loadbalancer.id, aws_security_group.default.id]
   subnets = local.aws_subnet_ids
   tags    = var.tags
 }
@@ -370,6 +375,7 @@ resource "aws_lb_target_group" "dns" {
     protocol = "TCP"
   }
 }
+
 # Create a load balancer target group.
 resource "aws_lb_target_group" "http" {
   name_prefix = "http-"
@@ -458,7 +464,6 @@ resource "aws_autoscaling_group" "agents" {
   placement_group       = aws_placement_group.default.id
   max_instance_lifetime = var.max_instance_lifetime
   vpc_zone_identifier   = tolist(local.aws_subnet_ids)
-  # target_group_arns     = [aws_lb_target_group.dns.arn, aws_lb_target_group.http.arn]
   launch_configuration  = aws_launch_configuration.agent[0].name
   enabled_metrics       = ["GroupDesiredCapacity", "GroupInServiceCapacity", "GroupPendingCapacity", "GroupMinSize", "GroupMaxSize", "GroupInServiceInstances", "GroupPendingInstances", "GroupStandbyInstances", "GroupStandbyCapacity", "GroupTerminatingCapacity", "GroupTerminatingInstances", "GroupTotalCapacity", "GroupTotalInstances"]
   instance_refresh {
