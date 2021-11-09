@@ -21,3 +21,9 @@ You will see the IP address of the bastion-host.
 ssh-add id_rsa
 ssh ec2-user@BASTION_HOST
 ```
+
+## Testing
+
+if `size` is set to `development`, 2 Consul agents will be started and connected. If all is well, you should be able to:
+
+- `dig @HOSTNAME_OF_LOADBALANCER -p 8600 httpd.service.dc1.consul.`
